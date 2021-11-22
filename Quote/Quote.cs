@@ -29,8 +29,8 @@ namespace Quote
 
             string signingSecret = Environment.GetEnvironmentVariable("SlackSigningSecret", EnvironmentVariableTarget.Process);
             UTF8Encoding encoder = new UTF8Encoding();
-            SHA256 sha256 = SHA256.Create();
-            byte[] hash = sha256.ComputeHash(encoder.GetBytes(String.Concat(signingSecret, validation)));
+            HMACSHA256 sha256 = new HMACSHA256(signingSecret);
+            byte[] hash = sha256.ComputeHash(encoder.GetBytes(validation));
             string hex = String.Concat("v0=", ToHex(hash, false));
 
             if (hex != signature)
