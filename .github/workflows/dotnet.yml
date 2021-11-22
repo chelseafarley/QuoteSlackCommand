@@ -1,0 +1,43 @@
+name: Test and Deploy (Functions Action)
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore: 
+      - '**/README.md'
+      - '**/*.yml'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+  
+env:
+  AZURE_FUNCTIONAPP_NAME: QuoteTW # set this to the name of your azure function app resource
+  AZURE_FUNCTION_PROJ_PATH: Quote # set this to the path to your function app project
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:    
+      - name: Get the latest source code commit
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build Function App for Release
+        run: dotnet build --configuration Release --output ./output
+        working-directory: ${{ env.AZURE_FUNCTION_PROJ_PATH }}
+
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: '${{ env.AZURE_FUNCTION_PROJ_PATH }}/output'
+          publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
